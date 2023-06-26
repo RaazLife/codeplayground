@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Online Code Editor</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f6f6f6;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: row;
+      height: 100vh;
+    }
+
+    .editor-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+
+    .tab-container {
+      display: flex;
+      margin-bottom: 10px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px;
+      background-color: #603cba;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: center;
+      border-radius: 4px 4px 0 0;
+      margin-right: 10px;
+    }
+
+    .tab.active {
+      background-color: #512c9a;
+    }
+
+    .editor {
+      flex: 1;
+      position: relative;
+      background-color: #fff;
+      border-radius: 4px;
+      padding: 10px;
+    }
+
+    .editor textarea {
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 4px;
+      resize: none;
+      background-color: #f6f6f6;
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 10px;
+    }
+
+    .preview-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 0;
+      background-color: #fff;
+      box-shadow: none;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+
+    .run-button {
+      padding: 10px 20px;
+      background-color: #512c9a;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="editor-container">
+      <div class="tab-container">
+        <div class="tab active" id="htmlTab">HTML</div>
+        <div class="tab" id="cssTab">CSS</div>
+        <div class="tab" id="jsTab">JavaScript</div>
+      </div>
+      <div class="editor">
+        <textarea id="htmlEditor" rows="10">&lt;h1&gt;Hello, world!&lt;/h1&gt;</textarea>
+        <textarea id="cssEditor" rows="10" style="display: none;">h1 { color: blue; }</textarea>
+        <textarea id="jsEditor" rows="10" style="display: none;">console.log("Hello, world!");</textarea>
+      </div>
+      <button id="runButton" class="run-button">Run Code</button>
+    </div>
+    <div class="preview-container">
+      <div class="card" id="codePreview"></div>
+    </div>
+  </div>
+
+  <script>
+    const htmlTab = document.getElementById('htmlTab');
+    const cssTab = document.getElementById('cssTab');
+    const jsTab = document.getElementById('jsTab');
+    const htmlEditor = document.getElementById('htmlEditor');
+    const cssEditor = document.getElementById('cssEditor');
+    const jsEditor = document.getElementById('jsEditor');
+    const codePreview = document.getElementById('codePreview');
+    const runButton = document.getElementById('runButton');
+
+    htmlTab.addEventListener('click', function() {
+      setActiveTab('html');
+    });
+
+    cssTab.addEventListener('click', function() {
+      setActiveTab('css');
+    });
+
+    jsTab.addEventListener('click', function() {
+      setActiveTab('js');
+    });
+
+    htmlEditor.addEventListener('input', updatePreview);
+    cssEditor.addEventListener('input', updatePreview);
+    jsEditor.addEventListener('input', updatePreview);
+    runButton.addEventListener('click', updatePreview);
+
+    function setActiveTab(tab) {
+      if (tab === 'html') {
+        htmlTab.classList.add('active');
+        cssTab.classList.remove('active');
+        jsTab.classList.remove('active');
+        htmlEditor.style.display = 'block';
+        cssEditor.style.display = 'none';
+        jsEditor.style.display = 'none';
+      } else if (tab === 'css') {
+        htmlTab.classList.remove('active');
+        cssTab.classList.add('active');
+        jsTab.classList.remove('active');
+        htmlEditor.style.display = 'none';
+        cssEditor.style.display = 'block';
+        jsEditor.style.display = 'none';
+      } else if (tab === 'js') {
+        htmlTab.classList.remove('active');
+        cssTab.classList.remove('active');
+        jsTab.classList.add('active');
+        htmlEditor.style.display = 'none';
+        cssEditor.style.display = 'none';
+        jsEditor.style.display = 'block';
+      }
+    }
+
+    function updatePreview() {
+      try {
+        const previewFrame = document.createElement('iframe');
+        previewFrame.className = 'live-preview';
+
+        // Clear the existing preview
+        while (codePreview.firstChild) {
+          codePreview.firstChild.remove();
+        }
+
+        // Append the preview frame to the preview container
+        codePreview.appendChild(previewFrame);
+
+        // Get the document object of the preview frame
+        const previewDocument = previewFrame.contentDocument || previewFrame.contentWindow.document;
+
+        // Write the HTML code to the preview frame's document
+        previewDocument.open();
+        previewDocument.write(htmlEditor.value);
+        previewDocument.close();
+
+        // Create a style element for CSS and set its content
+        const cssStyle = previewDocument.createElement('style');
+        cssStyle.textContent = cssEditor.value;
+        previewDocument.head.appendChild(cssStyle);
+
+        // Create a script element for JavaScript and set its content
+        const jsScript = previewDocument.createElement('script');
+        jsScript.textContent = jsEditor.value;
+        previewDocument.body.appendChild(jsScript);
+
+        codePreview.classList.remove('error');
+      } catch (error) {
+        codePreview.textContent = 'Error occurred while rendering the preview.';
+        codePreview.classList.add('error');
+      }
+    }
+
+    setActiveTab('html');
+    updatePreview();
+  </script>
+</body>
+</html>
